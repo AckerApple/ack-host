@@ -1,0 +1,30 @@
+{
+  "name": "ack-host",
+  "version": "0.2.0",
+  "description": "common node hosting functionality",
+  "main": "ack-host.js",
+  "scripts": {
+    "test": "mocha Tests/Cases --recursive"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:ackerapple/ack-host.git"
+  },
+  "keywords": [
+    "hosting"
+  ],
+  "author": "Acker Apple",
+  "license": "ISC",
+  "dependencies": {
+    "connect-timeout": "^1.7.0",
+    "basic-auth": "^1.0.4",
+    "compression": "^1.6.2",
+    "connect": "^3.5.0",
+    "express": "^4.13.4",
+    "ack-node": "^1.0.12",
+    "vhost": "^3.0.2"
+  },
+  "devDependencies": {
+    "mocha": "^2.3.4"
+  }
+}
