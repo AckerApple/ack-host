@@ -395,9 +395,9 @@ webapp.tools.ViewRoutePath.prototype.applyToApp = function(app){
 module.exports.webapp = webapp
 module.exports.host = host
 module.exports.static = express.static
+module.exports.reExpress = reExpress
 /*
 module.exports.express = router.express
-module.exports.reExpress = reExpress
 
 module.exports.strictPathing = router.strictPathing
 module.exports.consoleAll = router.consoleAll
