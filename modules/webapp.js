@@ -34,7 +34,7 @@ var host = function host(){
 host.leachApp = function(app){
 	app.events = new events.EventEmitter()
 	app.new = new webapp.tools(app)
-	return app//!!! RETURNS Express app (not-this)
+	return app
 }
 
 host.prototype.isProductionMode = isProductionMode
@@ -57,6 +57,15 @@ host.prototype.localNetworkOnly = function(route){
 		this.use(route, router.localNetworkOnly())
 	}else{
 		this.use( router.localNetworkOnly() )
+	}
+	return this
+}
+
+host.prototype.respond = function(routeOrString, stringOrOptions, options){
+	if(stringOrOptions){
+		this.use(routeOrString, router.respond(stringOrOptions, options))
+	}else{
+		this.use( router.respond(routeOrString) )
 	}
 	return this
 }
@@ -99,6 +108,25 @@ host.prototype.compress = function(options){
 /** options{origin:'url-string'}. No options means allow all. See package cors */
 host.prototype.cors = function(options){
 	this.use( router.cors(options) );return this
+}
+
+/**
+	times out a all requests after a given time
+	creates req.clearTimeout() to prevent timeout for a request
+	when time out occurs req.timedout is set to true
+	@time milliseconds
+	@respond true/false true=sets-response-headers
+*/
+host.prototype.timeout = function(ms, options){
+	if(!this.Timeout){
+		this.use(this.applyTimeout.bind(this));
+	}
+	this.Timeout = router.timeout(ms, options)
+	return this;
+}
+
+host.prototype.applyTimeout = function(req, res, next){
+	this.Timeout(req, res, next)
 }
 
 /**
@@ -205,6 +233,20 @@ host.prototype.jadePath = function(path){
 	return this
 }
 
+host.prototype.strictPaths = function(){
+	this.use(strictPathing);
+	return this;
+}
+
+/** always pre-load client input */
+host.prototype.preloadClientInput = function(){
+	this.use(function(req, res, next){
+		ackNode.reqres(req, res).req.loadClientInput()//pre-load form and multi-part posts
+		.set()//ensure nothing is passed along
+		.then(next).catch(next)
+	});
+	return this;
+}
 
 
 
@@ -221,39 +263,6 @@ for(var x in host.prototype){
 	webapp.prototype[x] = host.prototype[x]
 }
 
-webapp.prototype.strictPaths = function(){
-	this.use(strictPathing);
-	return this;
-}
-
-/**
-	times out a all requests after a given time
-	creates req.clearTimeout() to prevent timeout for a request
-	when time out occurs req.timedout is set to true
-	@time milliseconds
-	@respond true/false true=sets-response-headers
-*/
-webapp.prototype.timeout = function(ms, options){
-	if(!this.Timeout){
-		this.use(this.applyTimeout.bind(this));
-	}
-	this.Timeout = router.timeout(ms, options)
-	return this;
-}
-
-webapp.prototype.applyTimeout = function(req, res, next){
-	this.Timeout(req, res, next)
-}
-
-/** always pre-load client input */
-webapp.prototype.preloadClientInput = function(){
-	this.use(function(req, res, next){
-		ackNode.reqres(req, res).req.loadClientInput()//pre-load form and multi-part posts
-		.set()//ensure nothing is passed along
-		.then(next).catch(next)
-	});
-	return this;
-}
 
 
 

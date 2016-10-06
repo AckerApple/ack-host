@@ -46,6 +46,7 @@ describe('ackHost',function(){
 				})
 
 				testVhost.relocate('/relocate', 'http://google.com')
+				testVhost.respond('/respond', 'pre-made-response')
 
 				testVhost.use('/echo',function(req,res,next){
 					var reqres = ackNode.reqres(req, res)
@@ -289,6 +290,14 @@ describe('ackHost',function(){
 					.then(function(body, res){
 						assert.equal(res.statusCode, 301)
 						assert.equal(res.headers.location, 'http://google.com')
+					})
+					.then(done).catch(done)
+				})
+
+				it('respond',function(done){
+					req.send('/respond')
+					.then(function(body, res){
+						assert.equal(body, 'pre-made-response')
 					})
 					.then(done).catch(done)
 				})
