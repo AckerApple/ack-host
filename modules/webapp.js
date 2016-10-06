@@ -61,7 +61,8 @@ host.prototype.localNetworkOnly = function(route){
 	return this
 }
 
-host.prototype.404 = function(route){
+/** 404 */
+host.prototype.notFound = function(route){
 	if(route){
 		this.use(notFound, router.notFound())
 	}else{
