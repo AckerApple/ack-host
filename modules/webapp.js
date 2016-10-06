@@ -97,8 +97,9 @@ host.prototype.closeProductionErrors = function(route){
 	return this
 }
 
-host.prototype.ignoreFavors = function(){
-	this.use( router.ignoreFavors() );return this
+/** @statusCode - default 404 */
+host.prototype.ignoreFavors = function(statusCode){
+	this.use( router.ignoreFavors(statusCode) );return this
 }
 
 host.prototype.compress = function(options){
