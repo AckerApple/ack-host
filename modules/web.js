@@ -112,8 +112,8 @@ web.prototype.host = function(port, host, sslOps){
 	return app
 }
 
-//returns express app. args: portNumber, virtualHostName (does not pre-load clientInput)
-web.prototype.express = function(port, host, sslOps){
+/** returns express app. (does not pre-load clientInput) */
+web.prototype.api = function(port, host, sslOps){
 	var app = webapp.reExpress()
 	this.registerApp(app, port, host, sslOps)
 	return app
