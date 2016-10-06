@@ -114,8 +114,17 @@ web.prototype.host = function(port, host, sslOps){
 
 /** returns express app. (does not pre-load clientInput) */
 web.prototype.api = function(port, host, sslOps){
-	var app = webapp.reExpress()
+	var app = reExpress()
+	.strictPaths()
+	.preloadClientInput()
+	.timeout(10000)
+
+	app.beforeStart = function(){
+		app.use( ackNode.router().notFound() )
+	}
+	
 	this.registerApp(app, port, host, sslOps)
+
 	return app
 }
 
@@ -125,6 +134,10 @@ web.prototype.website = function(port, host, sslOps){
 	.strictPaths()
 	.preloadClientInput()
 	.timeout(30000)
+
+	app.beforeStart = function(){
+		app.use( ackNode.router().notFound() )
+	}
 
 	this.registerApp(app, port, host, sslOps)
 
@@ -158,6 +171,15 @@ web.prototype.startPort = function(portNum){
 				defApp(req,res,next)
 			}else{
 				next()
+			}
+		})
+	}
+
+	if(portStruct.rootApp.beforeStart){
+		portStruct.appArray.forEach((v,i)=>{
+			if(v.beforeStart){
+				console.log('a')
+				v.beforeStart()
 			}
 		})
 	}

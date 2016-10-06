@@ -7,13 +7,13 @@ var connect = require('connect'),
 		express = require('express'),
 		router = require('ack-node').router()
 
-var reExpress = function reExpress(){
+function reExpress(){
 	var app = host.leachApp(express().disable('x-powered-by'))
 	for(var x in host.prototype)app[x] = host.prototype[x]
 	return app
 }
 
-var isProductionMode = function(yesNo){
+function isProductionMode(yesNo){
 	if(yesNo!=null){
 		this.isProMode = yesNo
 		return yesNo
@@ -57,6 +57,15 @@ host.prototype.localNetworkOnly = function(route){
 		this.use(route, router.localNetworkOnly())
 	}else{
 		this.use( router.localNetworkOnly() )
+	}
+	return this
+}
+
+host.prototype.404 = function(route){
+	if(route){
+		this.use(notFound, router.notFound())
+	}else{
+		this.use( router.notFound() )
 	}
 	return this
 }
@@ -254,21 +263,12 @@ host.prototype.preloadClientInput = function(){
 
 
 //returns enhanced express Object. One step above using new host()
-var webapp = function webapp(){
-	var app = host.leachApp(express().disable('x-powered-by'))
-	for(var x in webapp.prototype)app[x] = webapp.prototype[x]
+function webapp(){
+	var app = reExpress()
+	this.tools = new webapp.tools(app)
 	return app
+
 }
-
-for(var x in host.prototype){
-	webapp.prototype[x] = host.prototype[x]
-}
-
-
-
-
-
-
 
 //Class aka we.app.new
 webapp.tools = function(app){
