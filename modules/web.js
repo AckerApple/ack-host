@@ -114,7 +114,7 @@ web.prototype.host = function(port, host, sslOps){
 
 /** returns express app. (does not pre-load clientInput) */
 web.prototype.api = function(port, host, sslOps){
-	var app = reExpress()
+	var app = new webapp.reExpress()
 	.strictPaths()
 	.preloadClientInput()
 	.timeout(10000)
