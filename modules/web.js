@@ -175,14 +175,11 @@ web.prototype.startPort = function(portNum){
 		})
 	}
 
-	if(portStruct.rootApp.beforeStart){
-		portStruct.appArray.forEach((v,i)=>{
-			if(v.beforeStart){
-				console.log('a')
-				v.beforeStart()
-			}
-		})
-	}
+	portStruct.appArray.forEach((v,i)=>{
+		if(v.beforeStart){
+			v.beforeStart()
+		}
+	})
 
 	if( !this.isProductionMode() && this.data.consoleNonProductionErrors ){
 		//console.log('--Non-Production-Mode-Detected (mode='+this.getRunningMode()+'): All request errors will be console logged.')

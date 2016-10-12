@@ -8,8 +8,7 @@ var connect = require('connect'),
 		router = require('ack-node').router()
 
 function reExpress(){
-	var app = host.leachApp(express().disable('x-powered-by'))
-	for(var x in host.prototype)app[x] = host.prototype[x]
+	var app = leachApp(express().disable('x-powered-by'))
 	return app
 }
 
@@ -26,15 +25,56 @@ function isProductionMode(yesNo){
 
 //one step above using http.createServer
 var host = function host(){
-	var app = host.leachApp(connect())
+	var app = leachApp(connect())
 	for(var x in host.prototype)app[x] = host.prototype[x]
 	return app
 }
 
-host.leachApp = function(app){
+function leachApp(app){
 	app.events = new events.EventEmitter()
-	app.new = new webapp.tools(app)
+	//app.new = new webapp.tools(app)
+
+	for(var x in host.prototype)app[x] = host.prototype[x]
+
+	app.routeLog = []
+	app.use = logAppRoutes(app, app.use)
+	app.all = logAppRoutes(app, app.all)
+	//app.static = logAppRoutes(app, app.static, 'GET')
+	app.get = logAppRoutes(app, app.get, 'GET')
+	app.post = logAppRoutes(app, app.post, 'POST')
+	app.put = logAppRoutes(app, app.put, 'PUT')
+
 	return app
+}
+
+function logAppRoutes(app, routerFn, method){
+	var use = routerFn
+	return function(){
+		var rtn = routerFn.apply(this, arguments) || {}
+
+		if(arguments.length>1){
+			var meta = {
+				path:arguments[0],
+				router:arguments[1]
+			}
+
+			if(method){
+				meta.method = method
+			}
+
+			app.routeLog.push(meta)
+
+			rtn.meta = function(newmeta){
+				if(newmeta){
+					Object.assign(meta, newmeta)
+				}
+
+				return meta
+			}
+		}
+
+		return rtn
+	}
 }
 
 host.prototype.isProductionMode = isProductionMode
@@ -153,16 +193,17 @@ host.prototype.static = function(route, path, options){
 
 	if(path){
 		if(options.compress){
-			this.use(route, router.compress());//gzip compress content
+			return this.use(route, router.compress(), staticRouter);//gzip compress content
 		}
-		this.use(route, staticRouter)
+		return this.use(route, staticRouter)
 	}else{
 		if(options.compress){//!must come before
-			this.use( router.compress() );//gzip compress content
+			return this.use(router.compress(), staticRouter);//gzip compress content
 		}
-		this.use(staticRouter)
+		return this.use(staticRouter)
 	}
 
+	return staticRouter
 }
 host.prototype.routeStaticPath = host.prototype.routeStaticPath//respect express
 
