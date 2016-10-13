@@ -62,7 +62,8 @@ describe('ackHost',function(){
 							authBearer : ci.getAuthBearer(),
 							combine    : ci.combine('cookie','header','url','form').data
 						}
-						var r = reqres.output(JSON.stringify(rtn)).send()
+						var string = JSON.stringify(rtn)
+						var r = reqres.output(string).send()
 					})
 					.catch(function(err){
 						console.error('error performing echo', err)
@@ -91,8 +92,8 @@ describe('ackHost',function(){
 
 				testVhost.use('/', function(req,res,next){
 					//res.$('you have reached: local.test.com:3000')
-					ackNode.reqres(req, res).output('you have reached: local.test.com:3000')
-					next()
+					ackNode.reqres(req, res).abort('you have reached: local.test.com:3000')
+					//next()
 				})
 
 				//Test vhost 2

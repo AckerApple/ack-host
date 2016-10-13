@@ -1,4 +1,7 @@
 "use strict";
+
+//!DEPRECATED
+
 var ackNode = require('ack-node'),
 	requestError = require('./requestError')
 

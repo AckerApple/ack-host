@@ -188,7 +188,11 @@ web.prototype.startPort = function(portNum){
 
 	//request closing
 	portStruct.rootApp.use(reqresRes.geterrhan())
-	portStruct.rootApp.use(reqresRes.getxreqhan())
+	portStruct.rootApp.use(function(req,res,next){
+    if(!res.closed && !res._headerSent){
+      ackNode.reqres(req,res).abort();
+    }
+  })
 
 	if(portStruct.sslOps){
 		var sslOps = portStruct.sslOps

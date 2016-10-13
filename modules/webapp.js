@@ -32,7 +32,7 @@ var host = function host(){
 
 function leachApp(app){
 	app.events = new events.EventEmitter()
-	//app.new = new webapp.tools(app)
+	app.new = new webapp.tools(app)
 
 	for(var x in host.prototype)app[x] = host.prototype[x]
 
