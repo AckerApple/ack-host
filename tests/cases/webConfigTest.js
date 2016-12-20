@@ -1,8 +1,8 @@
 "use strict";
 var assert = require('assert'),
 		ackHost = require('../../index'),
-		ackNode = require('ack-node'),
-		path = require('path')
+		ackNode = require('ack-node')
+		
 
 function testResponse(body, res){
 	if(res.headers && res.headers.message){
@@ -14,155 +14,92 @@ function testResponse(body, res){
 describe('ackHost',function(){
 	this.timeout(4000)
 	describe('#create-server',function(){
-		var web, webroot, portStruct, testVhost
+		var web, webroot, portStruct
 
 		beforeEach(function(){
-
 			web = ackHost//.consoleAll()
 			web.data.consoleNonProductionErrors = false//console errors not needed during tests
-
-			/* config web server */
-				//vhost test
-				testVhost = web.website(3000,['local.test.com','local.test2.com']).timeout(150)
-
-				var success = function(reqres){
-					assert.equal(typeof(reqres), 'object')
-					assert.equal(typeof(reqres.isHtml), 'function')
-				}
-				var reqRoutePath = path.join(__dirname,'../assets/reqroute/')
-				var viewRoutePath = path.join(__dirname,'../assets/viewroute/')
-				var staticPath = path.join(__dirname,'../assets/static/')
-
-				testVhost.static('/static', staticPath)
-				testVhost.new.RequestRoutePath('/reqroute', reqRoutePath, success)
-				testVhost.new.ViewRoutePath('/viewroute', viewRoutePath, success)
-
-				testVhost.use('/timeout', function(req, res, next){
-					setTimeout(next, 200)//after request should have timedout, continue
-				})
-
-				testVhost.get('/error',function(req,res){
-					ackNode.reqres(req, res).res.throw('this is an error test of local.test.com:3000')
-				})
-
-				testVhost.relocate('/relocate', 'http://google.com')
-				testVhost.respond('/respond', 'pre-made-response')
-
-				testVhost.use('/echo',function(req,res,next){
-					var reqres = ackNode.reqres(req, res)
-					reqres.req.clientInput()
-					.then(function(ci){
-						var rtn={
-							urls       : ci.url().data,
-							posts      : ci.form().data,
-							cookies    : ci.cookies().all(),
-							path       : reqres.req.Path().getString(),
-							headers    : ci.headers().data,
-							combined   : ci.combined().data,
-							authBearer : ci.getAuthBearer(),
-							combine    : ci.combine('cookie','header','url','form').data
-						}
-						var string = JSON.stringify(rtn)
-						var r = reqres.output(string).send()
-					})
-					.catch(function(err){
-						console.error('error performing echo', err)
-						next(err)
-					})
-				})
-
-				testVhost.use('/setCookie',function(req, res, next){
-					var reqres = ackNode.reqres(req, res)
-
-
-					reqres.req.loadClientInput()
-					.then(function(reqClientInput){
-						reqClientInput.cookies().set('test22','22').set('test33','33')
-
-						var rtn={
-							urls  : reqClientInput.url().data,
-							path  : reqres.req.Path().getString()
-						}
-
-						rtn.posts = reqClientInput.form().data
-						reqres.res.send( JSON.stringify(rtn) )
-					})
-					.catch(next)
-				})
-
-				testVhost.use('/', function(req,res,next){
-					//res.$('you have reached: local.test.com:3000')
-					ackNode.reqres(req, res).abort('you have reached: local.test.com:3000')
-					//next()
-				})
-
-				//Test vhost 2
-				testVhost = web.host(3000,'local.test2.com')
-				testVhost.use(function(req,res,next){
-					res.$.append('you have reached: local.test2.com:3000')
-					//ackNode.reqres(req, res).res('you have reached: local.test2.com:3000')
-					next()
-				})
-
-				//vhost test
-				testVhost = web.host(3001,'local.test3001.com')
-				testVhost.use(function(req,res,next){
-					ackNode.reqres(req,res).output('you have reached: local.test.com:3001')
-					//ackNode.reqres(req, res).res('you have reached: local.test.com:3001')
-					next()
-				})
-			/* end: configure web server */
-
-			portStruct = web.data.portStruct
 		})
 
-		it('port-count',function(){
-			assert.equal(web.getPortCount(),2)
-			assert.equal(Object.keys(portStruct).length,2)
-		})
+		describe('3002',()=>{
+			var testVhost, req
 
-		describe('#send',function(){
-			var testArray,req
 			beforeEach(function(done){
-				testArray = []
-				req = ackNode.req().setUrl('http://localhost:3000')
-				web.start(function(port,server){
-					testArray.push(arguments)
+				//vhost test
+				testVhost = web.host(3008,'local.test3002.com')
+				testVhost.use(function(req,res,next){
+					ackNode.reqres(req,res).output('you have reached: local.test.com:3008')
+					next()
 				})
-				.then(function(app, portStruct){})
-				.then(done)
-				.catch(done)
+				
+				web.host(3009,'local.test3002.com')
+				.use(function(req,res,next){
+					ackNode.reqres(req,res).output('you have reached: local.test.com:3009')
+					next()
+				})
+
+				web.start().then(()=>{done()}).catch(done)
 			})
 
-			afterEach(function(done){
-				web.stop().then(done).catch(done)
-			})
-
-			it('started',function(){
-				assert.equal(web.isOn(),true)
-				testArray.forEach(function(v,i){
-					assert.equal(typeof(v[0]),'number','port '+v[0]+' is not a number')
-					assert.equal(typeof(v[1]),'object')
-				})
+			afterEach(done=>{
+				web.stop().then(()=>web.dropPorts()).then(done).catch(done)
 			})
 
 			it('responds',function(done){
-				req.send()
+				ackNode.req().setUrl('http://localhost:3008').send()
 				.past(testResponse)
 				.then(function(body,res){
-					var failMsg = 'unexpected response from local.test.com:3000';
-					var expec = 'you have reached: local.test.com:3000'
-					return ackNode.req().send('http://localhost:3001')
+					var failMsg = 'unexpected response from local.test.com:3008';
+					var expec = 'you have reached: local.test.com:3008'
+					return ackNode.req().send('http://localhost:3009')
 				})
 				.past(testResponse)
 				.then(function(body,res){
 					var tof = typeof(body)
-					var expect = 'you have reached: local.test.com:3001'
+					var expect = 'you have reached: local.test.com:3009'
 					assert.equal(tof,'string')
 					assert.equal(body.length, expect.length)
 					assert.equal(body, expect)
 				})
 				.then(done).catch(done)
+			})
+		})
+
+		describe('#send',function(){
+			var testArray, req, testVhost
+
+			beforeEach(function(done){
+				testVhost = require('../sample-sites.js')(web)
+
+				testArray = []
+				web.startOnePort(function(port,server){
+					req = ackNode.req().setUrl('http://localhost:'+port)
+					testArray.push(arguments)
+				})
+				.then(ps=>{
+					portStruct = ps
+				})
+				.then(done).catch(done)
+			})
+
+			afterEach(done=>{
+				web.stop().then(()=>{
+					web.dropPorts()
+				}).then(done).catch(done)
+			})
+
+			it('port-count',function(){
+				assert.equal(web.getPortCount(),2)
+				assert.equal(Object.keys(portStruct).length,2)//3000,3001
+			})
+
+			it('started',function(){
+				assert.equal(web.isOn()?true:false,true)
+
+				testArray.forEach(function(v,i){
+					assert.equal(typeof(v[0]),'number','port '+v[0]+' is not a number')
+					assert.equal(typeof(v[1]),'object')
+				})
 			})
 
 			it('throws',function(done){
@@ -189,8 +126,8 @@ describe('ackHost',function(){
 
 			it('echos',function(done){
 				req
-				.post('test11',22)
-				.post({test22:22})
+				.postVar('test11',22)
+				.postVar({test22:22})
 				.var('test0',0).var({test33:33, test11:33})
 				.header('test44','44').header('test55','55')
 				.setAuthBearer('make-fake-jwt-token')
@@ -254,6 +191,7 @@ describe('ackHost',function(){
 				})
 			})
 
+			/*
 			describe('reqroute',function(){
 				it('index',function(done){
 					req
@@ -276,10 +214,11 @@ describe('ackHost',function(){
 					.then(done).catch(done)
 				})
 
-				it('nonExistingIndex',function(done){
+				it.only('nonExistingIndex',function(done){
 					req
 					.send('/reqroute/nonExistingIndex.js')
 					.then(function(body, res){
+						console.log('body',body)
 						assert.equal(res.statusCode, 404)
 						//statusMessage
 					})
@@ -325,6 +264,7 @@ describe('ackHost',function(){
 					.then(done).catch(done)
 				})
 			})
+			*/
 
 			it('stops',function(done){
 				web.stop().then(function(){
@@ -333,5 +273,20 @@ describe('ackHost',function(){
 				.then(done).catch(done)
 			})
 		})
+/*
+		describe('local.test2.com',()=>{
+			var testVhost
+
+			beforeEach(done=>{
+				//Test vhost 2
+				testVhost = web.host(3000,'local.test2.com')
+				testVhost.use(function(req,res,next){
+					res.$.append('you have reached: local.test2.com:3000')
+					//ackNode.reqres(req, res).res('you have reached: local.test2.com:3000')
+					next()
+				})
+			})
+		})
+*/
 	})
 })

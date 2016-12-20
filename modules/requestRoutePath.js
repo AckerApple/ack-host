@@ -74,7 +74,7 @@ RequestRoutePath.prototype.applyToApp = function(app){
 	var Path = this.getPathObj()
 
 	if(!Path.sync().exists()){
-		throw 'Invalid view route path: '+Path.path;
+		throw 'Path not found. Invalid view route path: '+Path.path;
 	}
 
 	var router = serverLoadingRouter

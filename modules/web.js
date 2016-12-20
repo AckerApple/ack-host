@@ -64,6 +64,12 @@ web.prototype.registerApp = function(app, portOrArray, host, sslOps){
 	return this
 }
 
+/**
+	@app - any connect/express like app with use/get/put/post/all methods
+	@port - single port or multiple port array
+	@host - domain host name or array of host names
+	@sslOps - {SNICallback, cert, key}
+*/
 web.prototype.registerOneApp = function(app, port, host, sslOps){
 	var portStruct = this.paramPortStruct(port)
 
@@ -144,14 +150,39 @@ web.prototype.website = function(port, host, sslOps){
 	return app
 }
 
+web.prototype.startOnePort = function(each,options={}){
+	options.portStartCount = 1
+	return this.start(each,options)
+}
+
 //each(portNum, server, rootApp, portStruct) = as each port is started
-web.prototype.start = function(each){
+web.prototype.start = function(each, options={}){
 	each = each || function(){}//function to call with each starting port
 
 	var portNumArr = Object.keys(this.data.portStruct)
+	let promise = ackNode.promise().bind(this)
 
-	return ackNode.promise().bind(this)
-	.map(portNumArr, this.startPort)
+	if(options.portStartCount){
+		let pos = 0
+		const rotator = function(){
+			if(pos>portNumArr.length){
+				throw 'ran out of ports'
+			}
+
+			return this.startPort(portNumArr[pos])
+			.then(server=>[server])
+			.catch(e=>{
+				++pos
+				return rotator()
+			})
+		}
+		
+		promise = promise.then(rotator)
+	}else{
+		promise = promise.map(portNumArr, this.startPort)
+	}
+
+	return promise
 	.map(function(array){
 		var portNum = array[0], portStruct = array[1]
 		each(portNum, portStruct.server, portStruct.rootApp, portStruct)
@@ -217,7 +248,13 @@ web.prototype.startPort = function(portNum){
 
 	return ackNode.promise().bind(tApp).set()
 	.callback(function(callback){
-		portStruct.server = tApp.listen(portNum,'0.0.0.0',callback)
+		
+		//portStruct.server = tApp.listen(portNum,'0.0.0.0',function(err,data){
+		portStruct.server = tApp.listen(portNum,'0.0.0.0',undefined,callback)
+		
+		portStruct.server.on('error',function(e){
+			console.log('i got the error33',e)
+		})
 	})//start the http.listen protcol on a certain port, with IPV4, and with a start-up-complete callback
 	.then(function(){
 		//tell all apps we have started
@@ -258,16 +295,25 @@ function getSniCallbackForPort(portNum, hostApp){
 }
 
 web.prototype.stop = function(each){
-	var ps = this.data.portStruct
-		,keys = Object.keys(ps)
-		,len = keys.length
+	const ps = this.data.portStruct
+	const keys = Object.keys(ps)
+	let stopped = keys.length
 
 	return ackNode.promise()
 	.next(function(next){
+		
+		function closer(){
+			if(stopped==0){
+				next()
+			}
+		}
+
 		keys.forEach(function(v,i){
-			var isLast = i+1==len
 			if(!ps[v].server){
-				if(isLast)next()
+				--stopped
+				if(!stopped){
+					next()
+				}
 				return//nothing to stop here
 			}
 
@@ -276,14 +322,14 @@ web.prototype.stop = function(each){
 			})
 
 			ps[v].server.close(function(){
+				--stopped
 				var server = ps[v].server
 
 				delete ps[v].server
-				//console.log('closed '+(i+1)+' of '+len+' ports('+v+')')
 
 				if(each)each(v)
 
-				if(isLast && next)next()
+				closer()
 			})
 		})
 	})
@@ -293,6 +339,7 @@ web.prototype.getPortCount = function(){
 	return Object.keys(this.data.portStruct).length
 }
 
+/** returns portnumber of port that is still on */
 web.prototype.isOn = function(){
 	var portNum,i,portKeys = Object.keys(this.data.portStruct)
 
@@ -301,7 +348,7 @@ web.prototype.isOn = function(){
 	for(i=0; i < portKeys.length; ++i){
 		portNum = portKeys[i]
 		if(this.data.portStruct[portNum].server){
-			return true
+			return portNum
 		}
 	}
 
@@ -318,6 +365,9 @@ web.prototype.paramPortStruct = function(port){
 	return this.data.portStruct[port]
 }
 
+web.prototype.dropPorts = function(){
+	this.data.portStruct = {};
+}
 
 
 

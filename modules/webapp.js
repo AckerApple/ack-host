@@ -39,7 +39,6 @@ function leachApp(app){
 	app.routeLog = []
 	app.use = logAppRoutes(app, app.use)
 	app.all = logAppRoutes(app, app.all)
-	//app.static = logAppRoutes(app, app.static, 'GET')
 	app.get = logAppRoutes(app, app.get, 'GET')
 	app.post = logAppRoutes(app, app.post, 'POST')
 	app.put = logAppRoutes(app, app.put, 'PUT')
@@ -47,6 +46,7 @@ function leachApp(app){
 	return app
 }
 
+/** creates meta method on routes */
 function logAppRoutes(app, routerFn, method){
 	var use = routerFn
 	return function(){

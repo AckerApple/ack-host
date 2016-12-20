@@ -7,7 +7,6 @@ module.exports.reqpro = function(reqres, $App, $reqpro){
 		return 'Invalid request. Index.js did not receive expected reqpro variable.'
 	}
 
-
 	if(!$App || $App.name!='reqroute'){
 		return 'invalid $App'
 	}else{
