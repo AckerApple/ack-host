@@ -164,26 +164,30 @@ web.prototype.start = function(each, options={}){
 
 	if(options.portStartCount){
 		let pos = 0
-		const rotator = function(){
+		const rotator = callback=>{
+			const port = Number(portNumArr[pos])
 			if(pos>portNumArr.length){
 				throw 'ran out of ports'
 			}
 
-			return this.startPort(portNumArr[pos])
-			.then(server=>[server])
-			.catch(e=>{
+			return this.startPort(port)
+			.then(server=>{
+				callback(null,[server])
+			})
+			.catch('EADDRINUSE',e=>{
 				++pos
-				return rotator()
+				return rotator(callback)
 			})
 		}
 		
-		promise = promise.then(rotator)
+		promise = promise.callback(rotator)
 	}else{
 		promise = promise.map(portNumArr, this.startPort)
 	}
 
 	return promise
 	.map(function(array){
+		//console.log('array', array[0])
 		var portNum = array[0], portStruct = array[1]
 		each(portNum, portStruct.server, portStruct.rootApp, portStruct)
 	})
@@ -246,14 +250,13 @@ web.prototype.startPort = function(portNum){
 		var tApp = portStruct.rootApp
 	}
 
-	return ackNode.promise().bind(tApp).set()
+	return ackNode.promise().bind(tApp)
 	.callback(function(callback){
-		
 		//portStruct.server = tApp.listen(portNum,'0.0.0.0',function(err,data){
 		portStruct.server = tApp.listen(portNum,'0.0.0.0',undefined,callback)
 		
 		portStruct.server.on('error',function(e){
-			console.log('i got the error33',e)
+			callback(e)
 		})
 	})//start the http.listen protcol on a certain port, with IPV4, and with a start-up-complete callback
 	.then(function(){

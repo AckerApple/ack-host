@@ -11,12 +11,12 @@ module.exports = function(web){
     assert.equal(typeof(reqres.isHtml), 'function')
   }
   var testAssetPath = path.join(__dirname,'assets')
-  var reqRoutePath = path.join(testAssetPath,'reqroute')
+  //var reqRoutePath = path.join(testAssetPath,'reqroute')
   var viewRoutePath = path.join(testAssetPath,'viewroute')
   var staticPath = path.join(testAssetPath,'static')
 
   testVhost.static('/static', staticPath)
-  testVhost.new.RequestRoutePath('/reqroute', reqRoutePath, success)
+  //testVhost.new.RequestRoutePath('/reqroute', reqRoutePath, success)
   testVhost.new.ViewRoutePath('/viewroute', viewRoutePath, success)
 
   testVhost.use('/timeout', function(req, res, next){
