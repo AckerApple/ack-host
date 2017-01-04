@@ -1,4 +1,5 @@
 "use strict";
+
 var	 ackNode = require('ack-node')//used for path crawling
 	//,reqrtn = require('../reqres/req')//Request Return : Object to handle processing request (process client input, uploads, paths)
 	,reqresRes = require('ack-node/modules/reqres/res')
@@ -75,6 +76,26 @@ web.prototype.registerOneApp = function(app, port, host, sslOps){
 
 	portStruct.appArray.push(app)//catalog app
 
+	/* add events */
+		app.beforeStart = function(method){
+			if(method=='start'){
+				return app.beforeStart.memory.forEach(callback=>callback())
+			}
+			
+			app.beforeStart.memory.push(method)
+		}
+		app.beforeStart.memory = []
+
+		app.afterStart = function(method){
+			if(method=='start'){
+				return app.afterStart.memory.forEach(callback=>callback())
+			}
+			
+			app.afterStart.memory.push(method)
+		}
+		app.afterStart.memory = []
+	/* end: add events */
+
 	if(app.isProductionMode){
 		app.isProductionMode( this.isProductionMode() )//pass production mode status along
 	}
@@ -118,18 +139,18 @@ web.prototype.host = function(port, host, sslOps){
 	return app
 }
 
-/** returns express app. (does not pre-load clientInput) */
+/** returns express app. Defaults: request-timeout=1000, 404 as last route */
 web.prototype.api = function(port, host, sslOps){
 	var app = new webapp.reExpress()
 	.strictPaths()
 	//.preloadClientInput()
 	.timeout(10000)
-
-	app.beforeStart = function(){
-		app.use( ackNode.router().notFound() )
-	}
 	
 	this.registerApp(app, port, host, sslOps)
+
+	app.beforeStart(function(){
+		app.use( ackNode.router().notFound() )
+	})
 
 	return app
 }
@@ -141,11 +162,11 @@ web.prototype.website = function(port, host, sslOps){
 	.preloadClientInput()
 	.timeout(30000)
 
-	app.beforeStart = function(){
-		app.use( ackNode.router().notFound() )
-	}
-
 	this.registerApp(app, port, host, sslOps)
+
+	app.beforeStart(function(){
+		app.use( ackNode.router().notFound() )
+	})
 
 	return app
 }
@@ -210,10 +231,8 @@ web.prototype.startPort = function(portNum){
 		})
 	}
 
-	portStruct.appArray.forEach((v,i)=>{
-		if(v.beforeStart){
-			v.beforeStart()
-		}
+	portStruct.appArray.forEach((app,i)=>{
+		app.beforeStart('start')
 	})
 
 	if( !this.isProductionMode() && this.data.consoleNonProductionErrors ){
@@ -261,8 +280,9 @@ web.prototype.startPort = function(portNum){
 	})//start the http.listen protcol on a certain port, with IPV4, and with a start-up-complete callback
 	.then(function(){
 		//tell all apps we have started
-		portStruct.appArray.forEach(function(v,i){
-			v.events.emit('start', portStruct.server)
+		portStruct.appArray.forEach(function(app,i){
+			app.events.emit('start', portStruct.server)
+			app.afterStart('start')
 		})
 	})
 	.set([portNum, portStruct])

@@ -320,14 +320,18 @@ webapp.tools = function(app){
 
 webapp.tools.prototype.RequestRoutePath = function(route, path, success, fail){
 	var Router = new webapp.tools.RequestRoutePath({route:route, path:path})
-	if(success)Router.success(success)
+	if(success){
+		Router.success(success)
+	}
 	if(fail)Router.fail(fail)
 	return Router.applyToApp(this.app)
 }
 
 webapp.tools.prototype.ViewRoutePath = function(route, path, success, fail){
 	var Router = new webapp.tools.ViewRoutePath({route:route, path:path})
-	if(success)Router.success(success)
+	if(success){
+		Router.success(success)
+	}
 	if(fail)Router.fail(fail)
 	return Router.applyToApp(this.app)
 }
