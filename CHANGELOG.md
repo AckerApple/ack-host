@@ -1,6 +1,9 @@
 # ack-host - Change Log
 All notable changes to this project will be documented here.
 
+## [0.4.0] - 2017-01-23
+### Updated Dependencies
+
 ## [0.3.3] - 2017-01-10
 ### Adjusted
 - tab stops
