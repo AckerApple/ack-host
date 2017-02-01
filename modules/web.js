@@ -189,6 +189,7 @@ web.prototype.website = function(port, host, sslOps){
   return app
 }
 
+//each(portNum, server, rootApp, portStruct) = as each port is started
 web.prototype.startOnePort = function(each,options={}){
   options.portStartCount = 1
   return this.start(each,options)

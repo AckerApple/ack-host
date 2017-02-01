@@ -115,7 +115,7 @@ host.prototype.respond = function(routeOrString, stringOrOptions, options){
 	if(stringOrOptions){
 		this.use(routeOrString, router.respond(stringOrOptions, options))
 	}else{
-		this.use( router.respond(routeOrString) )
+		this.use( router.respond(routeOrString, stringOrOptions) )
 	}
 	return this
 }
@@ -159,6 +159,13 @@ host.prototype.compress = function(options){
 /** options{origin:'url-string'}. No options means allow all. See package cors */
 host.prototype.cors = function(options){
 	this.use( router.cors(options) );return this
+}
+
+/** any request for robots.txt will return a text/plain message of "User-agent: *\rDisallow: /"
+	@options - not yet used
+*/
+host.prototype.noRobots = function(options){
+	this.use(/\/robots\.txt$/, router.noRobots(options) );return this
 }
 
 /**
@@ -213,9 +220,9 @@ host.prototype.routeStaticPath = host.prototype.routeStaticPath//respect express
 */
 host.prototype.relocate = function(routeOrUrl, url){
 	if(url){
-		this.use(routeOrUrl, router.relocate(url))
+		return this.use(routeOrUrl, router.relocate(url))
 	}else{
-		this.use(router.relocate(url))
+		return this.use(router.relocate(routeOrUrl))
 	}
 }
 

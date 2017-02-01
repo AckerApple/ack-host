@@ -1,6 +1,12 @@
 # ack-host - Change Log
 All notable changes to this project will be documented here.
 
+## [0.5.0] - 2017-02-01
+### Added
+- Documentation
+- webapp.noRobots
+
+
 ## [0.4.0] - 2017-01-23
 ### Updated Dependencies
 

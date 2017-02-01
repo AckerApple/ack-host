@@ -105,7 +105,7 @@ describe('ackHost',function(){
 			it('throws',function(done){
 				req.send('/error')
 				.then(function(body,res){
-					assert.equal(res.headers.message,'this is an error test of local.test.com:3000')
+					assert.equal(res.headers.message,'this is an error test of local_test_com_3000')
 				})
 				.then(done).catch(done)
 			})
