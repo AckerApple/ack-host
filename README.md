@@ -11,6 +11,8 @@ Common node hosting functionality to help reduce deployment of repetitious serve
   - [Website](#website)
   - [Express](#express)
   - [Built-in Middleware](#built-in-middleware)
+  - [Route Metadata](#route-metadata)
+  - [Testing](#testing)
 
 ## Examples
 
@@ -77,11 +79,30 @@ Most barebones provided method of http hosting. Barely any server assumptions. R
 const app = ackHost.host(port, host, options)
 ```
 
+- Arguments
+  - **port** Number|Array-of-Numbers - port or ports to listen on
+  - **host** String|Arrray-of-String - host names to listen for requests
+  - **options** 
+    - **cert** String - for ssl
+    - **key** String - for ssl
+    - **SNICallback** Function - for ssl
+
+
 ### API
 Assumes timeout of 10 seconds. A 404 will be thrown when no route is matched. Registers and returns [express app](https://www.npmjs.com/package/express)
 ```
 const app = ackHost.api(port, host, options)
 ```
+
+- Arguments
+  - **port** Number|Array-of-Numbers - port or ports to listen on
+  - **host** String|Arrray-of-String - host names to listen for requests
+  - **options** 
+    - **timeout** Number = 10000
+    - **cert** String - for ssl
+    - **key** String - for ssl
+    - **SNICallback** Function - for ssl
+
 
 ### Website
 Assumes timeout of 30 seconds. A 404 will be thrown when no route is matched. Client input such as form data, is always pre-parsed. Registers and returns [express app](https://www.npmjs.com/package/express)
@@ -89,11 +110,28 @@ Assumes timeout of 30 seconds. A 404 will be thrown when no route is matched. Cl
 const app = ackHost.website(port, host, options)
 ```
 
+- Arguments
+  - **port** Number|Array-of-Numbers - port or ports to listen on
+  - **host** String|Arrray-of-String - host names to listen for requests
+  - **options** 
+    - **timeout** Number = 10000
+    - **cert** String - for ssl
+    - **key** String - for ssl
+    - **SNICallback** Function - for ssl
+
 ### Express
 Registers and returns [express app](https://www.npmjs.com/package/express)
 ```
 const app = ackHost.express(port, host, options)
 ```
+
+- Arguments
+  - **port** Number|Array-of-Numbers - port or ports to listen on
+  - **host** String|Arrray-of-String - host names to listen for requests
+  - **options** 
+    - **cert** String - for ssl
+    - **key** String - for ssl
+    - **SNICallback** Function - for ssl
 
 ### start
 All sites registered with ack-host, will now be started
@@ -196,4 +234,137 @@ app.relocate('/toGoogle', 'http://google.com')
 relocate all other requests to an index
 ```
 app.relocate('index.html')
+```
+
+## Route Metadata
+Create route explanation and defintions using GET, POST, PUT, DELETE or USE metadata.
+
+### .meta()
+- **details** String - route descriptive details
+- **sample**
+  - **params** Object - Key value pair to fill in path :params
+  - **test** Boolean|Object
+    - **cases** Array-of-Functions|Function(response,assert)
+    - **only** Boolean
+    - **skip** Boolean
+    - **response** String|Function-Returns-String - prevent actual server request and fake response
+
+Route Metadata Example
+```
+const ackHost = require('ack-host')
+const port = 3000
+
+//create arbitrary server
+const app = ackHost.api(port).logging().timeout(2000).cors()
+
+app.get('/index.html', ackHost.router.respond('you have come to the right place'))
+.meta({
+  details:"main page of our website",
+  sample:()=>({
+    test:{
+      only:true,
+      cases:[(response,assert)=>{
+        assert.equal(response.body, 'you have come to the right place')
+      }]
+    }
+  })
+})
+
+app.get('/admin/index.html', ackHost.router.respond('you have come to the admin'))
+.meta({
+  details:"admin page of our website",
+  sample:()=>({
+    test:{skip:true},
+    cases:(response,assert)=>{
+      assert.equal(response.body, 'you have come to the right place')
+    }
+  })
+})
+
+app.get('/:id/data.json', (req,res)=>res.json({hello:'world '+req.params.id}))
+.meta({
+  details:"main page of our website",
+  sample:()=>({
+    test:{
+      only:false, skip:false,
+      params:{id:234},
+      cases:[(response,assert)=>{
+        assert.equal(response.body, '{"hello":"world 234"}')
+      }]
+    }
+  })
+})
+```
+
+
+## Testing
+Test server apps registered through ack-host
+
+### Testing Options
+- port   : Number = all-ports
+- host   : String = localhost
+- method : String (GET|POST|PUT|DELETE)
+- logTo  : Object = console.log - not yet implemented
+
+### Large Test Example
+```
+const ackHost = require('ack-host')
+const port = 3000
+
+//create arbitrary server
+const app = ackHost.api(port).logging().timeout(2000).cors()
+
+app.use(/\/robots\.txt/, ackHost.router.noRobots())
+.meta({
+  details:"prevents robots from crawling our site",
+  sample:()=>({
+    path:"/robots.txt",
+    test:true
+  })
+})
+
+app.get('/index.html', ackHost.router.respond('you have come to the right place'))
+.meta({
+  details:"main page of our website",
+  sample:()=>({
+    test:true
+  })
+})
+
+app.use( ackHost.router.relocate('/index.html') )
+.meta({
+  details:"redirects users to our index page",
+  sample:()=>({
+    test:true
+  })
+})
+
+ackHost.startAndTest()
+.then(results=>{
+  console.log('Finished Testing Ports:', Object.keys(results))
+  
+  for(var port in results){
+    console.log('Port Passing', port, results[port].passing.length)
+    console.log('Port Failing', port, results[port].failing.length)
+  }
+})
+.catch(e=>console.error('Coult Not Start and Test Server',e))
+```
+
+### Start Server and Test
+Will start ack-host server and then test all defined server apps
+```
+ackHost.startAndTest(options)
+```
+
+### Test Server Already Running
+Will test all defined apps against already running server
+```
+ackHost.test(options)
+```
+
+### Test Server Already Running With Limited Routes by Apps
+Will test provided apps against already running server
+```
+ackHost.testApps(apps,options)
 ```

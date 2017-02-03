@@ -9,12 +9,15 @@ var  ackNode = require('ack-node')//used for path crawling
   ,express = require('express')
   ,routers = ackNode.router()
 
+const startTestingRoutes = require('./startTestingRoutes.function')
+const testSite = require('./testRoutes.function')
 
 /**
   request object CLASS
   @scope: isClearRequires, consoleAll
 */
 var web = function web(){
+  this.router = routers
   this.data = {}
   this.data.portStruct = this.data.portStruct || {}
   this.data.routers = {}
@@ -132,10 +135,18 @@ web.prototype.registerOneApp = function(app, port, host, sslOps){
   return this
 }
 
-//returns connect-package app. args: portNumber, virtualHostName (does not pre-load clientInput)
-web.prototype.host = function(port, host, sslOps){
+/** returns connect-package app. args: portNumber, virtualHostName (does not pre-load clientInput)
+  @port - single port or multiple port array
+  @hostOrOptions - domain host name or array of host names || @options
+  @options{
+    cert:String - for ssl
+    key:String - for ssl
+    SNICallback:Function - for ssl
+  }
+*/
+web.prototype.host = function(port, host, options){
   var app = new webapp.host()//connect app WITH addons
-  this.registerApp(app, port, host, sslOps)
+  this.registerApp(app, port, host, options)
   return app
 }
 
@@ -143,7 +154,7 @@ web.prototype.host = function(port, host, sslOps){
   @port - single port or multiple port array
   @hostOrOptions - domain host name or array of host names || @options
   @options{
-    timeout:10000
+    timeout:Number = 10000
     cert:String - for ssl
     key:String - for ssl
     SNICallback:Function - for ssl
@@ -172,7 +183,7 @@ web.prototype.api = function(port, hostOrOptions, options){
   return app
 }
 
-//same as host but always pre-loads clientInput
+/** same as api but always pre-loads clientInput. Possibly deprecated */
 web.prototype.website = function(port, host, sslOps){
   var app = new webapp.webapp()
   .strictPaths()
@@ -189,10 +200,52 @@ web.prototype.website = function(port, host, sslOps){
   return app
 }
 
-//each(portNum, server, rootApp, portStruct) = as each port is started
-web.prototype.startOnePort = function(each,options={}){
+/** Returns object of test results {passing:[],failing:[]}
+  @options{
+    port   : Number = all-ports
+    host   : String = localhost
+    method : String (GET|POST|PUT|DELETE)
+    logTo  : Object = console.log - not yet implemented
+  }
+*/
+web.prototype.startAndTest = function(options){
+  return startTestingRoutes(this, this.data.portStruct, options)
+}
+
+/** see startAndTest */
+web.prototype.test = function(options={}){
+  this.eachApp((app,port)=>{
+    const ops = Object.assign({}, options)
+    ops.port = port
+    testSite(app, ops)
+  },options)
+}
+
+/** see startAndTest */
+web.prototype.testApps = function(apps, options){
+  for(let x=0; x < apps.length; ++x){
+    testSite(apps[x], options)
+  }
+}
+
+web.prototype.getAppsByPort = function(port){
+  return this.data.portStruct[port].appArray
+}
+
+web.prototype.eachApp = function(callback,options={}){
+  const ports = options.port ? [options.port] : Object.keys(this.data.portStruct)
+  for(let portIndex=0; portIndex < ports.length; ++portIndex){
+    let port = ports[portIndex]
+    for(let appIndex=0; appIndex < this.data.portStruct[port].appArray.length; ++appIndex){
+      callback( this.data.portStruct[port].appArray[appIndex], port)
+    }
+  }
+}
+
+/** as soon as one port is available to start, it is started */
+web.prototype.startOnePort = function(onPortStart,options={}){
   options.portStartCount = 1
-  return this.start(each,options)
+  return this.start(onPortStart,options)
 }
 
 //each(portNum, server, rootApp, portStruct) = as each port is started
@@ -205,9 +258,10 @@ web.prototype.start = function(each, options={}){
   if(options.portStartCount){
     let pos = 0
     const rotator = callback=>{
-      const port = Number(portNumArr[pos])
-      if(pos>portNumArr.length){
-        throw 'ran out of ports'
+      const port = Number( portNumArr[pos] )
+      if(pos>=portNumArr.length){
+        //throw new Error('ran out of ports')
+        callback( new Error('Ran out of ports to try to start server with. Ports Tried:'+portNumArr.join(',')) )
       }
 
       return this.startPort(port)
@@ -292,6 +346,7 @@ web.prototype.startPort = function(portNum){
   return ackNode.promise().bind(tApp)
   .callback(function(callback){
     //portStruct.server = tApp.listen(portNum,'0.0.0.0',function(err,data){
+
     portStruct.server = tApp.listen(portNum,'0.0.0.0',undefined,callback)
     
     portStruct.server.on('error',function(e){

@@ -6,7 +6,7 @@ var ackHost = require('../index')//require('ack-host')
 ackHost.host(8080, 'website.com').secure()
 
 // create https server that will serve static files
-var sslSite = ackHost.host(8081, 'website.com')//, sslOps)
+ackHost.host(8081, 'website.com')//, sslOps)
 .logging()
 .noRobots()
 .timeout(2000)
@@ -23,6 +23,8 @@ var sslSite = ackHost.host(8081, 'website.com')//, sslOps)
 .relocate('/toGoogle', 'http://google.com')
 .respond('/index.html','you have come to the right place')
 .relocate('/index.html')
+
+//all the methods used aboved return the app itself
 
 //start hosting two servers
 ackHost.start()
