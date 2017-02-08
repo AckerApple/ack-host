@@ -60,7 +60,7 @@ module.exports = function(site, options){
     }
 
     if(testMeta.sample.test.only){
-      onlyArray.push(testMeta)
+      onlyArray.unshift(testMeta)
     }
   }
 
@@ -115,7 +115,7 @@ function runTestCases(tests, processTest){
 }
 
 function promiseTestCase(test, processTest){
-  return runTestCase(test)
+  return Promise.resolve( runTestCase(test) )
   .catch(err=>err)
   .then(err=>processTest(test,err))
 }

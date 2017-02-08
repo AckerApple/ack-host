@@ -269,6 +269,7 @@ web.prototype.start = function(each, options={}){
         callback(null,[server])
       })
       .catch('EADDRINUSE',e=>{
+        console.log('\x1b[34mack-host:\x1b[0m \x1b[33mport '+port+' is in use\x1b[0m')
         ++pos
         return rotator(callback)
       })

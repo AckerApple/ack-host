@@ -1,6 +1,9 @@
 # ack-host - Change Log
 All notable changes to this project will be documented here.
 
+## [0.5.2] - 2017-02-08
+### update ack-node which update ack-path which had breaking changes
+
 ## [0.5.1] - 2017-02-03
 ### Added
 - Built-in Testing

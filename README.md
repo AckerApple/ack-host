@@ -243,11 +243,13 @@ Create route explanation and defintions using GET, POST, PUT, DELETE or USE meta
 - **details** String - route descriptive details
 - **sample**
   - **params** Object - Key value pair to fill in path :params
+  - **request** String|Object|Array|Function - request body to be used with sample test. When Function, the function is called for its request body data
+  - **response** String|Function-Returns-String - response body to be used to fake a server response during sample testing
   - **test** Boolean|Object
     - **cases** Array-of-Functions|Function(response,assert)
     - **only** Boolean
     - **skip** Boolean
-    - **response** String|Function-Returns-String - prevent actual server request and fake response
+    - **timeout** Number = 2000 - how long to wait before test is aborted
 
 Route Metadata Example
 ```
