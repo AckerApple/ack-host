@@ -9,6 +9,7 @@ if (process.platform === 'win32') {
   icons.check = '\u221A';
 }
 
+/** Runs node testing against a site/app */
 module.exports = function(site, options){
   const passing = []
   const failing = []
