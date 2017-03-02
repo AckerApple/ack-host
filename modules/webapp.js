@@ -376,7 +376,7 @@ webapp.tools.ViewRoutePath.prototype.processRequest = function(req, res, next){
 		,relpath  = reqPath
 		,relPath  = ackNode.path(relpath)
 		,Path     = this.getPathObj()
-		,deepPath = Path.new.join(reqPath)
+		,deepPath = Path.Join(reqPath)
 
 	return deepPath.fileSearchUp()
 	.setExt('.jade')
@@ -391,7 +391,7 @@ webapp.tools.ViewRoutePath.prototype.processRequest = function(req, res, next){
 			next()
 		}
 
-		var p = relPath.noFirstSlash().removeExt().string.noLastSlash()
+		var p = relPath.noFirstSlash().removeExt().String().noLastSlash()
 		var locals = reqres.input().data//url and form vars
 
 		//convert string literals
