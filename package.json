@@ -1,6 +1,6 @@
 {
   "name": "ack-host",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Common node hosting functionality to help reduce deployment of repetitious server functionality",
   "main": "ack-host.js",
   "scripts": {
