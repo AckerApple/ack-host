@@ -11,6 +11,11 @@ if (process.platform === 'win32') {
 
 /** Runs node testing against a site/app */
 module.exports = function(site, options){
+  const routes = routesToArray(site.routeLog)
+  return testRoutes(routes, options)
+}
+
+function testRoutes(routes, options){
   const passing = []
   const failing = []
   const routes = routesToArray(site.routeLog)
@@ -93,7 +98,6 @@ module.exports = function(site, options){
   .catch(e=>console.error(e))
 }
 
-
 function getRoutePath(route,sample={}){
   let simplePath = sample.path || route.path
   if(sample.params){
@@ -158,6 +162,7 @@ function mapSample(sample, route, options){
   @options{
     port - what port to conduct test on
     method - limit tests to only matching methods
+    host - server address
   }
 */
 function getTestBySampleRoute(sample,route,options){

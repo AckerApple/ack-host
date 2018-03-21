@@ -198,16 +198,22 @@ host.prototype.static = function(route, path, options){
 	var staticRouter = express.static(path || route, options)
 	options.compress = options.compress==null ? true : options.compress
 
-	if(path){
-		if(options.compress){
-			return this.use(route, router.compress(), staticRouter);//gzip compress content
+	if(options.compress){
+		const processor = (req,res,next)=>{
+			router.compress(req,res,()=>null)
+			staticRouter(req,res,next)
 		}
-		return this.use(route, staticRouter)
+		if(path){
+			return this.use(route, processor);//gzip compress content
+		}else{
+			return this.use(processor);//gzip compress content
+		}
 	}else{
-		if(options.compress){//!must come before
-			return this.use(router.compress(), staticRouter);//gzip compress content
+		if(path){
+			return this.use(route, staticRouter);//gzip compress content
+		}else{
+			return this.use(staticRouter);//gzip compress content
 		}
-		return this.use(staticRouter)
 	}
 
 	return staticRouter
