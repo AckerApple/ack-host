@@ -1,5 +1,5 @@
 var path = require('path')
-var ackNode = require('ack-node')
+var ackNode = require('ack-node').ackX
 var assert = require('assert')
 
 module.exports = function(web){  

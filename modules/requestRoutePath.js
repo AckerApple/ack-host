@@ -2,7 +2,7 @@
 
 //!DEPRECATED
 
-var ackNode = require('ack-node'),
+var ackNode = require('ack-node').ackX,
 	requestError = require('./requestError')
 
 module.exports = function(web, $scope){

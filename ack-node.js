@@ -1,1 +1,1 @@
-module.exports = require('ack-node')
+module.exports = require('ack-node').ackX

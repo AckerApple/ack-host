@@ -1,11 +1,13 @@
 "use strict";
 var connect = require('connect'),
 		basicAuth = require('basic-auth'),
-		ackNode = require('ack-node'),//used for path crawling
+		ackNode = require('ack-node').ackX,//used for path crawling
 		events = require('events'),
 		requestError = require('./requestError'),
-		express = require('express'),
-		router = require('ack-node').router()
+		express = require('express')
+
+
+var router = ackNode.router()
 
 function reExpress(){
 	var app = leachApp(express().disable('x-powered-by'))

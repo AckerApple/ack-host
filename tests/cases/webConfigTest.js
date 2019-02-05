@@ -1,7 +1,7 @@
 "use strict";
 var assert = require('assert'),
 		ackHost = require('../../index'),
-		ackNode = require('ack-node')
+		ackNode = require('ack-node').ackX
 		
 
 function testResponse(body, res){
@@ -128,7 +128,8 @@ describe('ackHost',function(){
 				req
 				.postVar('test11',22)
 				.postVar({test22:22})
-				.var('test0',0).var({test33:33, test11:33})
+				.var({test33:33, test11:33})
+				.var('test0',0)
 				.header('test44','44').header('test55','55')
 				.setAuthBearer('make-fake-jwt-token')
 				.cookie('tester','33').cookie({tester66:66})
@@ -136,7 +137,7 @@ describe('ackHost',function(){
 				.past(testResponse)
 				.then(function(body, res){
 					body = JSON.parse(body)
-					assert.equal(body.cookies.tester, 33)
+					assert.equal(body.cookies.tester, 33, "body.cookies.tester")
 					assert.equal(body.cookies.tester66, 66)
 					assert.equal(body.headers.test55, 55)
 					assert.equal(body.combined.test11, 22, 'echo combined url/post variables did not combine right')
@@ -144,7 +145,7 @@ describe('ackHost',function(){
 					assert.equal(body.combine.test44, 44, 'echo custom combine header variables did not combine right')
 					assert.equal(body.authBearer, 'make-fake-jwt-token')
 					assert.equal(22,body.posts.test22)
-					assert.equal(33,body.urls.test33)
+					assert.equal(33,body.urls.test33,"body.urls.test33")
 					assert.equal('',body.urls['empty-string'])
 					assert.equal('/echo',body.path)
 				})
@@ -191,81 +192,6 @@ describe('ackHost',function(){
 				})
 			})
 
-			/*
-			describe('reqroute',function(){
-				it('index',function(done){
-					req
-					.send('/reqroute/index.js')
-					.past(testResponse)
-					.then(function(body, res){
-						var expected = 'reqroute-index.js'
-						assert.equal(body.length, expected.length)
-					})
-					.then(done).catch(done)
-				})
-
-				it('badIndex',function(done){
-					req
-					.send('/reqroute/badIndex.js')
-					.then(function(body, res){
-						assert.equal(res.statusCode, 404)
-						//statusMessage
-					})
-					.then(done).catch(done)
-				})
-
-				it.only('nonExistingIndex',function(done){
-					req
-					.send('/reqroute/nonExistingIndex.js')
-					.then(function(body, res){
-						console.log('body',body)
-						assert.equal(res.statusCode, 404)
-						//statusMessage
-					})
-					.then(done).catch(done)
-				})
-
-				it('relocate',function(done){
-					req.send('/relocate', {followRedirect:false})
-					.then(function(body, res){
-						assert.equal(res.statusCode, 301)
-						assert.equal(res.headers.location, 'http://google.com')
-					})
-					.then(done).catch(done)
-				})
-
-				it('respond',function(done){
-					req.send('/respond')
-					.then(function(body, res){
-						assert.equal(body, 'pre-made-response')
-					})
-					.then(done).catch(done)
-				})
-
-				it('logout',function(done){
-					req
-					.send('/reqroute/index.js?logout=1')
-					.past(testResponse)
-					.then(function(body, res){
-						var expected = 'logged out'
-						assert.equal(body.length, expected.length)
-					})
-					.then(done).catch(done)
-				})
-
-				it('reqres-logout',function(done){
-					req
-					.send('/reqroute/index.js?reqres-logout=1')
-					.past(testResponse)
-					.then(function(body, res){
-						var expected = 'reqres-logged out'
-						assert.equal(body.length, expected.length)
-					})
-					.then(done).catch(done)
-				})
-			})
-			*/
-
 			it('stops',function(done){
 				web.stop().then(function(){
 					assert.equal(web.isOn(),false)
@@ -273,20 +199,5 @@ describe('ackHost',function(){
 				.then(done).catch(done)
 			})
 		})
-/*
-		describe('local.test2.com',()=>{
-			var testVhost
-
-			beforeEach(done=>{
-				//Test vhost 2
-				testVhost = web.host(3000,'local.test2.com')
-				testVhost.use(function(req,res,next){
-					res.$.append('you have reached: local.test2.com:3000')
-					//ackNode.reqres(req, res).res('you have reached: local.test2.com:3000')
-					next()
-				})
-			})
-		})
-*/
 	})
 })

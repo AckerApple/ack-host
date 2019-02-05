@@ -1,6 +1,6 @@
 {
   "name": "ack-host",
-  "version": "0.6.2",
+  "version": "0.7.0",
   "description": "Common node hosting functionality to help reduce deployment of repetitious server functionality",
   "main": "ack-host.js",
   "scripts": {
@@ -21,10 +21,10 @@
     "compression": "^1.6.2",
     "connect": "^3.6.0",
     "express": "^4.15.0",
-    "ack-node": "^1.4.0",
+    "ack-node": "^1.4.1",
     "vhost": "^3.0.2"
   },
   "devDependencies": {
-    "mocha": "^3.2.0"
+    "mocha": "^5.2.0"
   }
 }

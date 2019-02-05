@@ -1,6 +1,6 @@
 "use strict";
 
-var ackNode = require('ack-node')
+var ackNode = require('ack-node').ackX
 
 module.exports = function(reqres, err){
 	var output = {}

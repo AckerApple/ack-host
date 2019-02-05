@@ -1,6 +1,9 @@
 # ack-host - Change Log
 All notable changes to this project will be documented here.
 
+## [0.7.0] - 2019-02-05
+- updated packages and security fixes
+
 ## [0.6.2] - 2018-03-20
 - made static and compress work when not an express server
 

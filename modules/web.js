@@ -1,7 +1,7 @@
 "use strict";
-var  ackNode = require('ack-node')//used for path crawling
+var  ackNode = require('ack-node').ackX//used for path crawling
   //,reqrtn = require('../reqres/req')//Request Return : Object to handle processing request (process client input, uploads, paths)
-  ,reqresRes = require('ack-node/modules/reqres/res')
+  ,reqresRes = require('ack-node/js/modules/reqres/res')
   ,vhost = require('vhost')
   ,https = require('https')
   ,webapp = require('./webapp')
