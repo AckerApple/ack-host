@@ -1,13 +1,12 @@
-"use strict";
-var  ackNode = require('ack-node').ackX//used for path crawling
-  //,reqrtn = require('../reqres/req')//Request Return : Object to handle processing request (process client input, uploads, paths)
-  ,reqresRes = require('ack-node/js/modules/reqres/res')
-  ,vhost = require('vhost')
-  ,https = require('https')
-  ,webapp = require('./webapp')
-  ,tls = require('tls')
-  ,express = require('express')
-  ,routers = ackNode.router()
+import { ackX as ackNode } from 'ack-node'
+import * as reqresRes from 'ack-node/js/modules/reqres/res'
+import * as vhost from 'vhost'
+import * as https from 'https'
+import { host, webapp } from './webapp'
+import * as tls from 'tls'
+import * as express from 'express'
+
+const routers = ackNode.router()
 
 const startTestingRoutes = require('./startTestingRoutes.function')
 const testSite = require('./testRoutes.function')
@@ -16,7 +15,7 @@ const testSite = require('./testRoutes.function')
   request object CLASS
   @scope: isClearRequires, consoleAll
 */
-var web = function web(){
+var web:any = function web(){
   this.router = routers
   this.data = {}
   this.data.portStruct = this.data.portStruct || {}
@@ -25,8 +24,6 @@ var web = function web(){
   this.data.isClearRequires = this.data.isClearRequires || this.isProductionMode
   this.data.consoleAll = this.data.consoleAll
   this.data.consoleNonProductionErrors = true
-
-  return this
 }
 
 web.app = webapp.webapp
@@ -144,9 +141,9 @@ web.prototype.registerOneApp = function(app, port, host, sslOps){
     SNICallback:Function - for ssl
   }
 */
-web.prototype.host = function(port, host, options){
-  var app = new webapp.host()//connect app WITH addons
-  this.registerApp(app, port, host, options)
+web.prototype.host = function(port, hostName, options){
+  var app = host()//connect app WITH addons
+  this.registerApp(app, port, hostName, options)
   return app
 }
 
@@ -213,9 +210,9 @@ web.prototype.startAndTest = function(options){
 }
 
 /** see startAndTest */
-web.prototype.test = function(options={}){
+web.prototype.test = function(options:any={}){
   this.eachApp((app,port)=>{
-    const ops = Object.assign({}, options)
+    const ops = Object.assign(<any>{}, options)
     ops.port = port
     testSite(app, ops)
   },options)
@@ -232,7 +229,7 @@ web.prototype.getAppsByPort = function(port){
   return this.data.portStruct[port].appArray
 }
 
-web.prototype.eachApp = function(callback,options={}){
+web.prototype.eachApp = function(callback,options:any={}){
   const ports = options.port ? [options.port] : Object.keys(this.data.portStruct)
   for(let portIndex=0; portIndex < ports.length; ++portIndex){
     let port = ports[portIndex]
@@ -243,13 +240,13 @@ web.prototype.eachApp = function(callback,options={}){
 }
 
 /** as soon as one port is available to start, it is started */
-web.prototype.startOnePort = function(onPortStart,options={}){
+web.prototype.startOnePort = function(onPortStart,options:any={}){
   options.portStartCount = 1
   return this.start(onPortStart,options)
 }
 
 //each(portNum, server, rootApp, portStruct) = as each port is started
-web.prototype.start = function(each, options={}){
+web.prototype.start = function(each, options:any={}){
   each = each || function(){}//function to call with each starting port
 
   var portNumArr = Object.keys(this.data.portStruct)
@@ -323,6 +320,8 @@ web.prototype.startPort = function(portNum){
   })
 
   const ssl = portStruct.sslOps && portStruct.sslOps.cert && portStruct.sslOps.key
+  let tApp
+
   if(ssl){
     var sslOps = portStruct.sslOps
 
@@ -330,7 +329,7 @@ web.prototype.startPort = function(portNum){
       var isSniMode = portStruct.multiSslArray.length > 1
       if(isSniMode){
         if(portStruct.sslOps.SNICallback){//already exist?
-          var sslOps = {}//ensure sslOps.SNICallback won't be overwritten on original scope. If two ports start a server, the last one would always be the SNI responder for all request (bad)
+          sslOps = {}//ensure sslOps.SNICallback won't be overwritten on original scope. If two ports start a server, the last one would always be the SNI responder for all request (bad)
           for(var key in portStruct.sslOps){
             sslOps[key] = portStruct.sslOps[key]
           }
@@ -339,9 +338,9 @@ web.prototype.startPort = function(portNum){
       }
     /* END: DYNAMIC SSL */
 
-    var tApp = https.createServer(sslOps, portStruct.rootApp)
+    tApp = https.createServer(sslOps, portStruct.rootApp)
   }else{
-    var tApp = portStruct.rootApp
+    tApp = portStruct.rootApp
   }
 
   return ackNode.promise().bind(tApp)
@@ -459,7 +458,7 @@ web.prototype.paramPortStruct = function(port){
 
   this.data.portStruct[port]={
     appArray:[], hostArray:[], sslOps:null, multiSslArray:[],
-    rootApp:new webapp.host()//.use(this.getreqhan())
+    rootApp:host()//.use(this.getreqhan())
   }
   return this.data.portStruct[port]
 }
@@ -489,5 +488,5 @@ function reqresnext(iWeb){
 
 
 
-module.exports = new web()
+export const module = new web()
 //module.exports.Class = web

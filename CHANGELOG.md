@@ -1,6 +1,9 @@
 # ack-host - Change Log
 All notable changes to this project will be documented here.
 
+## [0.8.0] - 2019-05-26
+- TypeScripted
+
 ## [0.7.0] - 2019-02-05
 - updated packages and security fixes
 

@@ -1,18 +1,20 @@
-"use strict";
-var connect = require('connect'),
-		basicAuth = require('basic-auth'),
-		ackNode = require('ack-node').ackX,//used for path crawling
-		events = require('events'),
-		requestError = require('./requestError'),
-		express = require('express')
+import * as connect from 'connect'
+import * as basicAuth from 'basic-auth'
+import { ackX as ackNode } from 'ack-node'//used for path crawlin
+import * as events from 'events'
+import { requestError } from './requestError'
+import * as express from 'express'
 
+import { RequestRoutePath } from './requestRoutePath'
 
 var router = ackNode.router()
 
-function reExpress(){
+export const reExpress = function reExpress(){
 	var app = leachApp(express().disable('x-powered-by'))
 	return app
 }
+
+//export const static = express.static
 
 function isProductionMode(yesNo){
 	if(yesNo!=null){
@@ -26,9 +28,11 @@ function isProductionMode(yesNo){
 }
 
 //one step above using http.createServer
-var host = function host(){
+export const host = function host(){
 	var app = leachApp(connect())
-	for(var x in host.prototype)app[x] = host.prototype[x]
+	for(var x in host.prototype){
+		app[x] = host.prototype[x]
+	}
 	return app
 }
 
@@ -49,13 +53,13 @@ function leachApp(app){
 }
 
 /** creates meta method on routes */
-function logAppRoutes(app, routerFn, method){
+function logAppRoutes(app, routerFn, method?){
 	var use = routerFn
 	return function(){
 		var rtn = routerFn.apply(this, arguments) || {}
 
 		if(arguments.length>1){
-			var meta = {
+			var meta:any = {
 				path:arguments[0],
 				router:arguments[1]
 			}
@@ -106,7 +110,7 @@ host.prototype.localNetworkOnly = function(route){
 /** 404 */
 host.prototype.notFound = function(route){
 	if(route){
-		this.use(notFound, router.notFound())
+		this.use(route, router.notFound())
 	}else{
 		this.use( router.notFound() )
 	}
@@ -320,133 +324,139 @@ host.prototype.preloadClientInput = function(){
 
 
 //returns enhanced express Object. One step above using new host()
-function webapp(){
+export const webapp:any = function(){
 	var app = reExpress()
-	this.tools = new webapp.tools(app)
+	this.tools = new tools(app)
 	return app
-
 }
 
 //Class aka we.app.new
-webapp.tools = function(app){
-	this.app = app
-	return this
-}
+export class tools{
+	app:any
 
-webapp.tools.prototype.RequestRoutePath = function(route, path, success, fail){
-	var Router = new webapp.tools.RequestRoutePath({route:route, path:path})
-	if(success){
-		Router.success(success)
+	constructor(app){	
+		this.app = app
 	}
-	if(fail)Router.fail(fail)
-	return Router.applyToApp(this.app)
-}
 
-webapp.tools.prototype.ViewRoutePath = function(route, path, success, fail){
-	var Router = new webapp.tools.ViewRoutePath({route:route, path:path})
-	if(success){
-		Router.success(success)
+	RequestRoutePath(route, path, success, fail){
+		var Router = new RequestRoutePath({route:route, path:path})
+		if(success){
+			Router.success(success)
+		}
+		if(fail)Router.fail(fail)
+		return Router.applyToApp(this.app)
 	}
-	if(fail)Router.fail(fail)
-	return Router.applyToApp(this.app)
+
+	ViewRoutePath(route, path, success, fail){
+		var Router = new ViewRoutePath({route:route, path:path})
+		if(success){
+			Router.success(success)
+		}
+		if(fail)Router.fail(fail)
+		return Router.applyToApp(this.app)
+	}
+
 }
 
-
-webapp.tools.RequestRoutePath = require('./requestRoutePath')
+webapp.tools = tools
 
 
 
 
 //Class
-webapp.tools.ViewRoutePath = function(a){
-	this.data = a || {};return this
-}
+export class ViewRoutePath{
+	data:any
 
-webapp.tools.ViewRoutePath.prototype.getPathObj = function(){
-	return ackNode.path(this.data.path)
-}
+	constructor(a){
+		this.data = a || {};return this
+	}
 
-webapp.tools.ViewRoutePath.prototype.fail = function(fail){
-	this.data.fail = fail;return this
-}
+	getPathObj(){
+		return ackNode.path(this.data.path)
+	}
 
-webapp.tools.ViewRoutePath.prototype.success = function(success){
-	this.data.success = success;return this
-}
+	fail(fail){
+		this.data.fail = fail;return this
+	}
 
-webapp.tools.ViewRoutePath.prototype.processRequest = function(req, res, next){
-	var reqres = ackNode.reqres(req, res)
-	var jPath = reqres.req.Path()
-	var reqPath = jPath.relative
+	success(success){
+		this.data.success = success;return this
+	}
 
-	var  fail     = this.data.fail
-		,success  = this.data.sucess
-		,relpath  = reqPath
-		,relPath  = ackNode.path(relpath)
-		,Path     = this.getPathObj()
-		,deepPath = Path.Join(reqPath)
+	processRequest(req, res, next){
+		var reqres = ackNode.reqres(req, res)
+		var jPath = reqres.req.Path()
+		var reqPath = jPath.relative
 
-	return deepPath.fileSearchUp()
-	.setExt('.jade')
-	.setIndexFileName('index.jade')
-	.rollUpWith(relPath)
-	.go()
-	.then(function(path){
-		if(!path){
-			if(fail){
-				fail(relpath, req, res)
+		var  fail     = this.data.fail
+			,success  = this.data.sucess
+			,relpath  = reqPath
+			,relPath  = ackNode.path(relpath)
+			,Path     = this.getPathObj()
+			,deepPath = Path.Join(reqPath)
+
+		return deepPath.fileSearchUp()
+		.setExt('.jade')
+		.setIndexFileName('index.jade')
+		.rollUpWith(relPath)
+		.go()
+		.then(function(path){
+			if(!path){
+				if(fail){
+					fail(relpath, req, res)
+				}
+				next()
 			}
-			next()
-		}
 
-		var p = relPath.noFirstSlash().removeExt().String().noLastSlash()
-		var locals = reqres.input().data//url and form vars
+			var p = relPath.noFirstSlash().removeExt().String().noLastSlash()
+			var locals = reqres.input().data//url and form vars
 
-		//convert string literals
-		for(var key in locals){
-			switch(locals[key]){
-				case 'true':{
-					locals[key] = true
-					break;
-				}
-				case 'false':{
-					locals[key] = false
-					break;
-				}
+			//convert string literals
+			for(var key in locals){
+				switch(locals[key]){
+					case 'true':{
+						locals[key] = true
+						break;
+					}
+					case 'false':{
+						locals[key] = false
+						break;
+					}
 
-				default:{
-					var n = Number(locals[key])//string numbers to numbers
-					if(!isNaN(n)){
-						locals[key] = n
+					default:{
+						var n = Number(locals[key])//string numbers to numbers
+						if(!isNaN(n)){
+							locals[key] = n
+						}
 					}
 				}
 			}
-		}
 
-		var html = ackNode.template(path, locals)
+			var html = ackNode.template(path, locals)
 
-		ackNode.reqres(req, res).res.abort(html)//success! close request
-	})
-}
-
-webapp.tools.ViewRoutePath.prototype.applyToApp = function(app){
-	var Path = this.getPathObj(), success=this.data.success
-	var $this = this
-
-	if(!Path.sync().exists()){
-		throw new Error('Invalid view route path: '+Path.path);
+			ackNode.reqres(req, res).res.abort(html)//success! close request
+		})
 	}
 
-	app.use(this.data.route, function(req,res,next){
-		$this.processRequest(req, res, next).set()
-		.catch(function(e){
-			var reqres = ackNode.reqres(req, res)
-			requestError(reqres, e)
-			//next()
-		})
-	})
+	applyToApp(app){
+		var Path = this.getPathObj(), success=this.data.success
+		var $this = this
 
-	return this
+		if(!Path.sync().exists()){
+			throw new Error('Invalid view route path: '+Path.path);
+		}
+
+		app.use(this.data.route, function(req,res,next){
+			$this.processRequest(req, res, next).set()
+			.catch(function(e){
+				var reqres = ackNode.reqres(req, res)
+				requestError(reqres, e)
+				//next()
+			})
+		})
+
+		return this
+	}
 }
 
 
@@ -454,17 +464,6 @@ webapp.tools.ViewRoutePath.prototype.applyToApp = function(app){
 
 
 
-module.exports.webapp = webapp
-module.exports.host = host
-module.exports.static = express.static
-module.exports.reExpress = reExpress
-/*
-module.exports.express = router.express
-
-module.exports.strictPathing = router.strictPathing
-module.exports.consoleAll = router.consoleAll
-module.exports.routeCookieToAuthHeader = router.routeCookieToAuthHeader
-*/
 function strictPathing(req, res, next){
 	var reqres = ackNode.reqres(req, res)
 		,abUrl = reqres.req.absoluteUrl()//pre-load form and multi-part posts

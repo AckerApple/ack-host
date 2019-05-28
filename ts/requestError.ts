@@ -1,9 +1,7 @@
-"use strict";
+import { ackX as ackNode } from 'ack-node'
 
-var ackNode = require('ack-node').ackX
-
-module.exports = function(reqres, err){
-	var output = {}
+export const requestError = function(reqres, err){
+	var output:any = {}
 	var jError = ackNode.error(err)
 
 	if(err.stack){
